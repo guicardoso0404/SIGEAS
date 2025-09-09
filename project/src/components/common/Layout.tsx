@@ -11,23 +11,16 @@ interface LayoutProps {
 
 export const Layout: React.FC<LayoutProps> = ({ children, currentPage, onPageChange }) => {
   const { user, logout } = useAuth();
-  // Controla se o sidebar está visível. Em telas grandes inicia aberto
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  // Detecta se o layout está em modo mobile (largura < 1024px)
-  const [isMobile, setIsMobile] = useState(true);
 
   useEffect(() => {
     const checkIsMobile = () => {
       const mobile = window.innerWidth < 1024;
-      setIsMobile(mobile);
-      // Em telas não móveis, o sidebar fica sempre visível
       if (!mobile) {
         setSidebarOpen(true);
       }
     };
-    // Executa verificação inicial
     checkIsMobile();
-    // Atualiza quando a janela é redimensionada
     window.addEventListener('resize', checkIsMobile);
     return () => window.removeEventListener('resize', checkIsMobile);
   }, []);
@@ -72,8 +65,6 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentPage, onPageCha
   };
 
   const menuItems = getMenuItems();
-
-  // A animação de abertura e fechamento do menu lateral será gerida via classes Tailwind.
 
   return (
     <div className="flex h-screen overflow-hidden bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">

@@ -149,8 +149,6 @@ export const mockPresencas: Presenca[] = [
   }
 ];
 
-// -------------------- Novos dados para atividades e submissões --------------------
-
 import type { Atividade, SubmissaoAtividade } from '../types';
 
 /**

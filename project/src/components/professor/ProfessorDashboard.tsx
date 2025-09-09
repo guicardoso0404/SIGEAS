@@ -5,6 +5,7 @@ import { mockTurmas, mockAlunos, mockNotas, mockPresencas } from '../../data/moc
 import { VerAlunos } from './VerAlunos';
 import { LancarChamadaModal } from './LancarChamadaModal';
 import { LancarNotasModal } from './LancarNotasModal';
+import ChamadaNotasProfessor from './ChamadaNotasProfessor';
 
 export const ProfessorDashboard: React.FC = () => {
   const { user } = useAuth();
@@ -60,6 +61,11 @@ export const ProfessorDashboard: React.FC = () => {
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-gray-900">Dashboard do Professor</h1>
         <p className="text-gray-600 mt-2">Bem-vindo(a), {user?.nome}!</p>
+      </div>
+
+      {/* Chamada e Notas dos Alunos */}
+      <div className="mb-8">
+        <ChamadaNotasProfessor />
       </div>
 
       {/* Stats Cards */}

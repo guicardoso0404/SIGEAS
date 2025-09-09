@@ -33,7 +33,6 @@ export const useAuthProvider = () => {
     localStorage.removeItem('sigeas-user');
   };
 
-  // Verificar se há usuário salvo no localStorage
   const checkSavedUser = () => {
     const savedUser = localStorage.getItem('sigeas-user');
     if (savedUser && !user) {
