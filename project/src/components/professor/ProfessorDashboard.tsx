@@ -1,10 +1,16 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { BookOpen, Users, ClipboardList, TrendingUp } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { mockTurmas, mockAlunos, mockNotas, mockPresencas } from '../../data/mockData';
+import { VerAlunos } from './VerAlunos';
+import { LancarChamadaModal } from './LancarChamadaModal';
+import { LancarNotasModal } from './LancarNotasModal';
 
 export const ProfessorDashboard: React.FC = () => {
   const { user } = useAuth();
+  const [showVerAlunos, setShowVerAlunos] = useState(false);
+  const [showLancarChamada, setShowLancarChamada] = useState(false);
+  const [showLancarNotas, setShowLancarNotas] = useState(false);
 
   const professorTurmas = mockTurmas.filter(t => t.professorId === user?.id);
   const totalAlunos = professorTurmas.reduce((total, turma) => {
@@ -110,20 +116,34 @@ export const ProfessorDashboard: React.FC = () => {
       <div className="bg-white rounded-lg shadow-md p-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Ações Rápidas</h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <button className="flex items-center justify-center p-4 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+          <button 
+            onClick={() => setShowLancarChamada(true)}
+            className="flex items-center justify-center p-4 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+          >
             <ClipboardList className="w-5 h-5 mr-2 text-blue-600" />
             <span>Lançar Chamada</span>
           </button>
-          <button className="flex items-center justify-center p-4 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+          <button 
+            onClick={() => setShowLancarNotas(true)}
+            className="flex items-center justify-center p-4 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+          >
             <TrendingUp className="w-5 h-5 mr-2 text-green-600" />
             <span>Lançar Notas</span>
           </button>
-          <button className="flex items-center justify-center p-4 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+          <button 
+            onClick={() => setShowVerAlunos(true)}
+            className="flex items-center justify-center p-4 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+          >
             <Users className="w-5 h-5 mr-2 text-purple-600" />
             <span>Ver Alunos</span>
           </button>
         </div>
       </div>
+      
+      {/* Modals */}
+      <VerAlunos isOpen={showVerAlunos} onClose={() => setShowVerAlunos(false)} />
+      <LancarChamadaModal isOpen={showLancarChamada} onClose={() => setShowLancarChamada(false)} />
+      <LancarNotasModal isOpen={showLancarNotas} onClose={() => setShowLancarNotas(false)} />
     </div>
   );
 };

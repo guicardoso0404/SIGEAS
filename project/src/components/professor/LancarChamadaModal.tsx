@@ -2,7 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { Calendar, Users, Check, X, Save } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { mockTurmas, mockAlunos } from '../../data/mockData';
+import { Modal } from '../common/Modal';
 import { Presenca } from '../../types';
+
+interface LancarChamadaModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
 
 interface ChamadaData {
   [alunoId: string]: boolean;
@@ -13,20 +19,20 @@ const generateId = () => {
   return Date.now().toString(36) + Math.random().toString(36).substring(2);
 };
 
-export const ChamadaLauncher: React.FC = () => {
+export const LancarChamadaModal: React.FC<LancarChamadaModalProps> = ({ isOpen, onClose }) => {
   const { user } = useAuth();
   const [selectedTurma, setSelectedTurma] = useState('');
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [chamadaData, setChamadaData] = useState<ChamadaData>({});
-  const [presencasSalvas, setPresencasSalvas] = useState<Presenca[]>([]);
 
-  // Carregar presenças salvas do localStorage
   useEffect(() => {
-    const savedPresencas = localStorage.getItem('sigeas_presencas');
-    if (savedPresencas) {
-      setPresencasSalvas(JSON.parse(savedPresencas));
+    if (isOpen) {
+      const professorTurmas = mockTurmas.filter(t => t.professorId === user?.id);
+      if (professorTurmas.length > 0) {
+        setSelectedTurma(professorTurmas[0].id);
+      }
     }
-  }, []);
+  }, [isOpen, user?.id]);
 
   const professorTurmas = mockTurmas.filter(t => t.professorId === user?.id);
   const alunosTurma = selectedTurma ? mockAlunos.filter(a => a.turmaId === selectedTurma) : [];
@@ -79,7 +85,7 @@ export const ChamadaLauncher: React.FC = () => {
     
     alert('Chamada salva com sucesso!');
     setChamadaData({});
-    setPresencasSalvas(presencasAtualizadas);
+    onClose();
   };
 
   const getTurmaName = (turmaId: string) => {
@@ -88,13 +94,21 @@ export const ChamadaLauncher: React.FC = () => {
   };
 
   return (
-    <div>
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Lançar Chamada</h1>
-        <p className="text-gray-600 mt-2">Registre a presença dos alunos</p>
-      </div>
+    <Modal isOpen={isOpen} onClose={onClose} maxWidth="max-w-3xl">
+      <div className="p-6 w-full">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-xl font-bold text-gray-900 flex items-center">
+            <Calendar className="w-5 h-5 mr-2 text-blue-600" />
+            Lançar Chamada
+          </h2>
+          <button 
+            onClick={onClose}
+            className="text-gray-400 hover:text-gray-500"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
 
-      <div className="bg-white rounded-lg shadow-md p-6 mb-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
           <div>
             <label htmlFor="turma" className="block text-sm font-medium text-gray-700 mb-2">
@@ -144,7 +158,7 @@ export const ChamadaLauncher: React.FC = () => {
               </div>
             </div>
 
-            <div className="space-y-3">
+            <div className="space-y-3 max-h-96 overflow-y-auto">
               {alunosTurma.map(aluno => (
                 <div key={aluno.id} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
                   <div className="flex items-center">
@@ -197,6 +211,6 @@ export const ChamadaLauncher: React.FC = () => {
           </div>
         )}
       </div>
-    </div>
+    </Modal>
   );
 };

@@ -1,8 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { Users, Save } from 'lucide-react';
+import { TrendingUp, Users, Save, X } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
-import { mockTurmas, mockAlunos, mockNotas, mockProfessores } from '../../data/mockData';
+import { mockTurmas, mockAlunos, mockProfessores } from '../../data/mockData';
+import { Modal } from '../common/Modal';
 import { Nota } from '../../types';
+
+interface LancarNotasModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
 
 interface NotasData {
   [alunoId: string]: {
@@ -17,20 +23,27 @@ const generateId = () => {
   return Date.now().toString(36) + Math.random().toString(36).substring(2);
 };
 
-export const NotasLauncher: React.FC = () => {
+export const LancarNotasModal: React.FC<LancarNotasModalProps> = ({ isOpen, onClose }) => {
   const { user } = useAuth();
   const [selectedTurma, setSelectedTurma] = useState('');
   const [notasData, setNotasData] = useState<NotasData>({});
   const [notasSalvas, setNotasSalvas] = useState<Nota[]>([]);
 
-  // Carregar notas salvas do localStorage
   useEffect(() => {
-    const savedNotas = localStorage.getItem('sigeas_notas');
-    if (savedNotas) {
-      const notas = JSON.parse(savedNotas);
-      setNotasSalvas(notas);
+    if (isOpen) {
+      const professorTurmas = mockTurmas.filter(t => t.professorId === user?.id);
+      if (professorTurmas.length > 0) {
+        setSelectedTurma(professorTurmas[0].id);
+      }
+      
+      // Carregar notas salvas do localStorage
+      const savedNotas = localStorage.getItem('sigeas_notas');
+      if (savedNotas) {
+        const notas = JSON.parse(savedNotas);
+        setNotasSalvas(notas);
+      }
     }
-  }, []);
+  }, [isOpen, user?.id]);
 
   const professorTurmas = mockTurmas.filter(t => t.professorId === user?.id);
   const alunosTurma = selectedTurma ? mockAlunos.filter(a => a.turmaId === selectedTurma) : [];
@@ -93,6 +106,7 @@ export const NotasLauncher: React.FC = () => {
     alert('Notas salvas com sucesso!');
     setNotasData({});
     setNotasSalvas(notasAtualizadas);
+    onClose();
   };
 
   const getTurmaName = (turmaId: string) => {
@@ -101,13 +115,21 @@ export const NotasLauncher: React.FC = () => {
   };
 
   return (
-    <div>
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Lançar Notas</h1>
-        <p className="text-gray-600 mt-2">Registre as notas dos alunos</p>
-      </div>
+    <Modal isOpen={isOpen} onClose={onClose} maxWidth="max-w-4xl">
+      <div className="p-6 w-full">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-xl font-bold text-gray-900 flex items-center">
+            <TrendingUp className="w-5 h-5 mr-2 text-green-600" />
+            Lançar Notas
+          </h2>
+          <button 
+            onClick={onClose}
+            className="text-gray-400 hover:text-gray-500"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
 
-      <div className="bg-white rounded-lg shadow-md p-6 mb-6">
         <div className="mb-6">
           <label htmlFor="turma" className="block text-sm font-medium text-gray-700 mb-2">
             Selecionar Turma
@@ -136,7 +158,7 @@ export const NotasLauncher: React.FC = () => {
               Lançamento de Notas - {getTurmaName(selectedTurma)}
             </h3>
 
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto max-h-96 overflow-y-auto">
               <table className="min-w-full">
                 <thead>
                   <tr className="border-b border-gray-200">
@@ -220,6 +242,6 @@ export const NotasLauncher: React.FC = () => {
           </div>
         )}
       </div>
-    </div>
+    </Modal>
   );
 };

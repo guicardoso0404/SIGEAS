@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Calendar } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { mockPresencas, mockTurmas } from '../../data/mockData';
+import { Presenca } from '../../types';
 
 /**
  * Exibe o histórico de presenças do aluno autenticado. Mostra
@@ -12,10 +13,30 @@ import { mockPresencas, mockTurmas } from '../../data/mockData';
  */
 export const Presencas: React.FC = () => {
   const { user } = useAuth();
-  const presencas = mockPresencas
-    .filter(p => p.alunoId === user?.id)
-    .sort((a, b) => new Date(b.data).getTime() - new Date(a.data).getTime());
+  const [presencas, setPresencas] = useState<Presenca[]>([]);
+  
+  useEffect(() => {
+    // Carregar presenças do localStorage
+    const savedPresencas = localStorage.getItem('sigeas_presencas');
+    
+    if (savedPresencas) {
+      const todasPresencas = JSON.parse(savedPresencas) as Presenca[];
+      // Filtrar apenas as presenças do aluno atual e ordenar por data decrescente
+      const presencasDoAluno = todasPresencas
+        .filter(p => p.alunoId === user?.id)
+        .sort((a, b) => new Date(b.data).getTime() - new Date(a.data).getTime());
+      setPresencas(presencasDoAluno);
+    } else {
+      // Fallback para os dados mockados
+      setPresencas(
+        mockPresencas
+          .filter(p => p.alunoId === user?.id)
+          .sort((a, b) => new Date(b.data).getTime() - new Date(a.data).getTime())
+      );
+    }
+  }, [user?.id]);
 
+  // Calcular métricas de presença
   const totalAulas = presencas.length;
   const totalPresencas = presencas.filter(p => p.presente).length;
   const percentual = totalAulas > 0 ? (totalPresencas / totalAulas) * 100 : 0;

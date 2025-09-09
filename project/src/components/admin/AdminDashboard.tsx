@@ -1,10 +1,19 @@
-import React from 'react';
-import { Users, BookOpen, GraduationCap, TrendingUp, Calendar, Award, Target, Activity } from 'lucide-react';
+import React, { useState } from 'react';
+import { Users, BookOpen, GraduationCap, TrendingUp, Target, Activity } from 'lucide-react';
 import { mockTurmas, mockProfessores, mockAlunos } from '../../data/mockData';
 import { Card, StatCard } from '../common/Card';
 import { motion } from 'framer-motion';
+import { NovaTurmaModal } from './NovaTurmaModal';
+import { NovoProfessorModal } from './NovoProfessorModal';
+import { NovoAlunoModal } from './NovoAlunoModal';
+import { RelatoriosModal } from './RelatoriosModal';
 
 export const AdminDashboard: React.FC = () => {
+  const [showNovaTurma, setShowNovaTurma] = useState(false);
+  const [showNovoProfessor, setShowNovoProfessor] = useState(false);
+  const [showNovoAluno, setShowNovoAluno] = useState(false);
+  const [showRelatorios, setShowRelatorios] = useState(false);
+  
   const stats = {
     totalTurmas: mockTurmas.length,
     totalProfessores: mockProfessores.length,
@@ -219,15 +228,16 @@ export const AdminDashboard: React.FC = () => {
           <h3 className="text-xl font-bold text-slate-800 mb-6">Ações Rápidas</h3>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             {[
-              { icon: BookOpen, label: 'Nova Turma', color: 'from-blue-500 to-blue-600' },
-              { icon: Users, label: 'Cadastrar Professor', color: 'from-green-500 to-green-600' },
-              { icon: GraduationCap, label: 'Matricular Aluno', color: 'from-purple-500 to-purple-600' },
-              { icon: Target, label: 'Relatórios', color: 'from-orange-500 to-orange-600' }
+              { icon: BookOpen, label: 'Nova Turma', color: 'from-blue-500 to-blue-600', action: () => setShowNovaTurma(true) },
+              { icon: Users, label: 'Cadastrar Professor', color: 'from-green-500 to-green-600', action: () => setShowNovoProfessor(true) },
+              { icon: GraduationCap, label: 'Matricular Aluno', color: 'from-purple-500 to-purple-600', action: () => setShowNovoAluno(true) },
+              { icon: Target, label: 'Relatórios', color: 'from-orange-500 to-orange-600', action: () => setShowRelatorios(true) }
             ].map((action, index) => (
               <motion.button
                 key={index}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
+                onClick={action.action}
                 className={`flex flex-col items-center justify-center p-6 bg-gradient-to-r ${action.color} text-white rounded-xl shadow-lg hover:shadow-xl transition-all`}
               >
                 <action.icon className="w-8 h-8 mb-3" />
@@ -237,6 +247,12 @@ export const AdminDashboard: React.FC = () => {
           </div>
         </Card>
       </motion.div>
+      
+      {/* Modals */}
+      <NovaTurmaModal isOpen={showNovaTurma} onClose={() => setShowNovaTurma(false)} />
+      <NovoProfessorModal isOpen={showNovoProfessor} onClose={() => setShowNovoProfessor(false)} />
+      <NovoAlunoModal isOpen={showNovoAluno} onClose={() => setShowNovoAluno(false)} />
+      <RelatoriosModal isOpen={showRelatorios} onClose={() => setShowRelatorios(false)} />
     </div>
   );
 };

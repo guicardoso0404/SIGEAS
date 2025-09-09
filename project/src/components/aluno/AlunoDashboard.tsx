@@ -84,6 +84,34 @@ export const AlunoDashboard: React.FC = () => {
         })}
       </div>
 
+      {/* Quick Actions */}
+      <div className="bg-white rounded-lg shadow-md p-6 mb-8">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Ações Rápidas</h3>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <button 
+            onClick={() => window.location.href = "#/minhas-notas"}
+            className="flex items-center justify-center p-4 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+          >
+            <TrendingUp className="w-5 h-5 mr-2 text-blue-600" />
+            <span>Ver Notas</span>
+          </button>
+          <button 
+            onClick={() => window.location.href = "#/presencas"}
+            className="flex items-center justify-center p-4 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+          >
+            <Calendar className="w-5 h-5 mr-2 text-green-600" />
+            <span>Minhas Presenças</span>
+          </button>
+          <button 
+            onClick={() => window.location.href = "#/minha-turma"}
+            className="flex items-center justify-center p-4 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+          >
+            <BookOpen className="w-5 h-5 mr-2 text-purple-600" />
+            <span>Minha Turma</span>
+          </button>
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Minhas Notas */}
         <div className="bg-white rounded-lg shadow-md p-6">

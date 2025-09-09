@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Award } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { mockNotas } from '../../data/mockData';
+import { Nota } from '../../types';
 
 /**
  * Página que lista as notas lançadas para o aluno autenticado. Cada
@@ -11,7 +12,22 @@ import { mockNotas } from '../../data/mockData';
  */
 export const MinhasNotas: React.FC = () => {
   const { user } = useAuth();
-  const notasAluno = mockNotas.filter(n => n.alunoId === user?.id);
+  const [notasAluno, setNotasAluno] = useState<Nota[]>([]);
+  
+  useEffect(() => {
+    // Carregar notas do localStorage
+    const savedNotas = localStorage.getItem('sigeas_notas');
+    
+    if (savedNotas) {
+      const notas = JSON.parse(savedNotas) as Nota[];
+      // Filtrar apenas as notas do aluno atual
+      const notasDoAluno = notas.filter(n => n.alunoId === user?.id);
+      setNotasAluno(notasDoAluno);
+    } else {
+      // Fallback para os dados mockados
+      setNotasAluno(mockNotas.filter(n => n.alunoId === user?.id));
+    }
+  }, [user?.id]);
 
   return (
     <div className="space-y-8">
