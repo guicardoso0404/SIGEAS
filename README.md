@@ -1,6 +1,7 @@
 # SIGEAS - Sistema de Gestão Escolar Avançado
 
 SIGEAS é um sistema de gestão escolar desenvolvido com React, TypeScript, e Tailwind CSS. O sistema oferece interfaces específicas para administradores, professores e alunos.
+Em desenvolvimento por: Guilherme Cardoso, Nicolas Menegussi Ramos, Rafaela Ferrasso e Maria eduarda Locks
 
 ## Funcionalidades
 
