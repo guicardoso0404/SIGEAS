@@ -8,7 +8,7 @@ interface ChamadaData {
   [alunoId: string]: boolean;
 }
 
-// Função para gerar um ID único
+
 const generateId = () => {
   return Date.now().toString(36) + Math.random().toString(36).substring(2);
 };
@@ -20,7 +20,7 @@ export const ChamadaLauncher: React.FC = () => {
   const [chamadaData, setChamadaData] = useState<ChamadaData>({});
   const [presencasSalvas, setPresencasSalvas] = useState<Presenca[]>([]);
 
-  // Carregar presenças salvas do localStorage
+
   useEffect(() => {
     const savedPresencas = localStorage.getItem('sigeas_presencas');
     if (savedPresencas) {
@@ -49,10 +49,10 @@ export const ChamadaLauncher: React.FC = () => {
       return;
     }
 
-    // Obter presenças existentes
+
     const existingPresencas = JSON.parse(localStorage.getItem('sigeas_presencas') || '[]') as Presenca[];
     
-    // Criar novas presenças a partir do chamadaData
+
     const novasPresencas: Presenca[] = Object.keys(chamadaData).map(alunoId => {
       return {
         id: generateId(),
@@ -64,7 +64,7 @@ export const ChamadaLauncher: React.FC = () => {
       };
     });
     
-    // Juntar com presenças existentes, substituindo as da mesma turma/data/aluno
+ 
     const presencasAtualizadas = [
       ...existingPresencas.filter((p: Presenca) => 
         p.turmaId !== selectedTurma || 
@@ -74,7 +74,7 @@ export const ChamadaLauncher: React.FC = () => {
       ...novasPresencas
     ];
     
-    // Salvar no localStorage
+
     localStorage.setItem('sigeas_presencas', JSON.stringify(presencasAtualizadas));
     
     alert('Chamada salva com sucesso!');

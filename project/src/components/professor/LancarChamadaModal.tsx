@@ -14,7 +14,7 @@ interface ChamadaData {
   [alunoId: string]: boolean;
 }
 
-// Função para gerar um ID único
+
 const generateId = () => {
   return Date.now().toString(36) + Math.random().toString(36).substring(2);
 };
@@ -55,10 +55,9 @@ export const LancarChamadaModal: React.FC<LancarChamadaModalProps> = ({ isOpen, 
       return;
     }
 
-    // Obter presenças existentes
     const existingPresencas = JSON.parse(localStorage.getItem('sigeas_presencas') || '[]') as Presenca[];
     
-    // Criar novas presenças a partir do chamadaData
+
     const novasPresencas: Presenca[] = Object.keys(chamadaData).map(alunoId => {
       return {
         id: generateId(),
@@ -70,7 +69,7 @@ export const LancarChamadaModal: React.FC<LancarChamadaModalProps> = ({ isOpen, 
       };
     });
     
-    // Juntar com presenças existentes, substituindo as da mesma turma/data/aluno
+
     const presencasAtualizadas = [
       ...existingPresencas.filter((p: Presenca) => 
         p.turmaId !== selectedTurma || 
@@ -80,7 +79,7 @@ export const LancarChamadaModal: React.FC<LancarChamadaModalProps> = ({ isOpen, 
       ...novasPresencas
     ];
     
-    // Salvar no localStorage
+
     localStorage.setItem('sigeas_presencas', JSON.stringify(presencasAtualizadas));
     
     alert('Chamada salva com sucesso!');

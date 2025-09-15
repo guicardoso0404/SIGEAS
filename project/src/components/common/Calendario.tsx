@@ -8,15 +8,11 @@ interface CalendarioProps {
   userType: 'professor' | 'aluno';
 }
 
-/**
- * Exibe um calendário simplificado listando atividades (tarefas) e, para
- * alunos, registros de presença. Agrupa eventos por data, ordenando
- * cronologicamente para facilitar a visualização do cronograma.
- */
+
 export const Calendario: React.FC<CalendarioProps> = ({ userType }) => {
   const { user } = useAuth();
   if (!user) return null;
-  // Coleciona eventos de acordo com o perfil
+
   type Evento = {
     date: string;
     type: 'atividade' | 'presenca';
@@ -25,7 +21,7 @@ export const Calendario: React.FC<CalendarioProps> = ({ userType }) => {
   };
   const eventos: Evento[] = [];
   if (userType === 'professor') {
-    // Atividades das turmas do professor
+
     mockAtividades
       .filter((a) => a.professorId === user.id)
       .forEach((a) => {
@@ -37,7 +33,7 @@ export const Calendario: React.FC<CalendarioProps> = ({ userType }) => {
         });
       });
   } else {
-    // Aluno: atividades da sua turma
+
     const aluno = mockAlunos.find(a => a.id === user.id);
     mockAtividades
       .filter((a) => a.turmaId === aluno?.turmaId)
@@ -49,7 +45,7 @@ export const Calendario: React.FC<CalendarioProps> = ({ userType }) => {
           desc: `Entrega da atividade`,
         });
       });
-    // Presenças: adicionar como eventos
+
     mockPresencas
       .filter((p) => p.alunoId === user.id)
       .forEach((p) => {
@@ -62,7 +58,7 @@ export const Calendario: React.FC<CalendarioProps> = ({ userType }) => {
         });
       });
   }
-  // Ordena eventos por data (mais próximos primeiro)
+
   eventos.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
   return (
     <div className="space-y-8">

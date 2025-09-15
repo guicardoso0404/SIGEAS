@@ -3,12 +3,7 @@ import { Users, BookOpen } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { mockTurmas, mockAlunos } from '../../data/mockData';
 
-/**
- * Página que lista todas as turmas sob responsabilidade do professor
- * autenticado. Cada card exibe o nome, série, ano letivo e o total
- * de alunos matriculados. Caso o professor não tenha nenhuma turma
- * associada, é exibida uma mensagem apropriada.
- */
+
 export const MinhasTurmas: React.FC = () => {
   const { user } = useAuth();
   const turmasProfessor = mockTurmas.filter(t => t.professorId === user?.id);

@@ -5,12 +5,7 @@ import { Card } from '../common/Card';
 import { Button } from '../common/Button';
 import { FilePlus, ListChecks } from 'lucide-react';
 
-/**
- * Página de gerenciamento de atividades para professores. Permite
- * visualizar atividades existentes, criar novas e acompanhar o
- * número de submissões feitas pelos alunos. Utiliza estado local
- * para refletir alterações sem persistência externa.
- */
+
 export const AtividadesProfessor: React.FC = () => {
   const { user } = useAuth();
   // Lista de atividades filtradas pelo professor logado

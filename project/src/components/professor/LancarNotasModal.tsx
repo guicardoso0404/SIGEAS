@@ -18,7 +18,7 @@ interface NotasData {
   };
 }
 
-// Função para gerar um ID único
+
 const generateId = () => {
   return Date.now().toString(36) + Math.random().toString(36).substring(2);
 };
@@ -36,7 +36,7 @@ export const LancarNotasModal: React.FC<LancarNotasModalProps> = ({ isOpen, onCl
         setSelectedTurma(professorTurmas[0].id);
       }
       
-      // Carregar notas salvas do localStorage
+
       const savedNotas = localStorage.getItem('sigeas_notas');
       if (savedNotas) {
         const notas = JSON.parse(savedNotas);
@@ -53,7 +53,7 @@ export const LancarNotasModal: React.FC<LancarNotasModalProps> = ({ isOpen, onCl
     const notasAluno = notasData[alunoId] || {};
     const novasNotas = { ...notasAluno, [campo]: nota };
     
-    // Calcular média automaticamente se ambas as notas estiverem preenchidas
+
     if (novasNotas.nota1 !== undefined && novasNotas.nota2 !== undefined) {
       novasNotas.mediaFinal = (novasNotas.nota1 + novasNotas.nota2) / 2;
     }
@@ -70,7 +70,7 @@ export const LancarNotasModal: React.FC<LancarNotasModalProps> = ({ isOpen, onCl
       return;
     }
 
-    // Criar novas notas a partir do notasData
+
     const disciplina = mockProfessores.find((p) => p.id === user?.id)?.disciplina || 'Geral';
     const hoje = new Date().toISOString().split('T')[0];
     
@@ -91,7 +91,7 @@ export const LancarNotasModal: React.FC<LancarNotasModalProps> = ({ isOpen, onCl
       };
     });
     
-    // Juntar com notas existentes, substituindo as do mesmo aluno/disciplina
+
     const notasAtualizadas = [
       ...existingNotas.filter((n: Nota) => 
         !Object.keys(notasData).includes(n.alunoId) || 
@@ -100,7 +100,7 @@ export const LancarNotasModal: React.FC<LancarNotasModalProps> = ({ isOpen, onCl
       ...novasNotas
     ];
     
-    // Salvar no localStorage
+
     localStorage.setItem('sigeas_notas', JSON.stringify(notasAtualizadas));
     
     alert('Notas salvas com sucesso!');
