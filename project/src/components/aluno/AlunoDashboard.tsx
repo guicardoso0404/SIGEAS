@@ -9,7 +9,7 @@ export const AlunoDashboard: React.FC = () => {
   const alunoNotas = mockNotas.filter(n => n.alunoId === user?.id);
   const alunoPresencas = mockPresencas.filter(p => p.alunoId === user?.id);
   
-  // Calcular estatísticas
+
   const totalPresencas = alunoPresencas.length;
   const presencasCount = alunoPresencas.filter(p => p.presente).length;
   const percentualPresenca = totalPresencas > 0 ? (presencasCount / totalPresencas) * 100 : 0;

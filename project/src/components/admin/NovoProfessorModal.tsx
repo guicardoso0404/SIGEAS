@@ -16,7 +16,7 @@ export const NovoProfessorModal: React.FC<NovoProfessorModalProps> = ({ isOpen, 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Aqui você adicionaria a lógica para salvar o novo professor
+
     const novoProfessor = {
       id: Date.now().toString(),
       nome,
@@ -29,7 +29,7 @@ export const NovoProfessorModal: React.FC<NovoProfessorModalProps> = ({ isOpen, 
     professores.push(novoProfessor);
     localStorage.setItem('professores', JSON.stringify(professores));
     
-    // Resetar formulário e fechar modal
+
     setNome('');
     setEmail('');
     setDisciplina('');

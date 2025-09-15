@@ -10,7 +10,7 @@ interface NovaTurmaProps {
   onClose: () => void;
 }
 
-// Função para gerar um ID único
+
 const generateId = () => {
   return Date.now().toString(36) + Math.random().toString(36).substring(2);
 };
@@ -29,7 +29,7 @@ export const NovaTurmaModal: React.FC<NovaTurmaProps> = ({ isOpen, onClose }) =>
       return;
     }
 
-    // Criar nova turma
+
     const novaTurma: Turma = {
       id: generateId(),
       nome,
@@ -38,13 +38,13 @@ export const NovaTurmaModal: React.FC<NovaTurmaProps> = ({ isOpen, onClose }) =>
       professorId: professorId || undefined
     };
 
-    // Obter turmas existentes
+
     const existingTurmas = JSON.parse(localStorage.getItem('sigeas_turmas') || JSON.stringify(mockTurmas));
     
-    // Adicionar nova turma
+
     const turmasAtualizadas = [...existingTurmas, novaTurma];
     
-    // Salvar no localStorage
+
     localStorage.setItem('sigeas_turmas', JSON.stringify(turmasAtualizadas));
     
     alert('Turma criada com sucesso!');

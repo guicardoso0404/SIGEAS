@@ -17,7 +17,7 @@ export const NovoAlunoModal: React.FC<NovoAlunoModalProps> = ({ isOpen, onClose 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Aqui você adicionaria a lógica para matricular um novo aluno
+  
     const novoAluno = {
       id: Date.now().toString(),
       nome,
@@ -25,12 +25,12 @@ export const NovoAlunoModal: React.FC<NovoAlunoModalProps> = ({ isOpen, onClose 
       turmaId
     };
     
-    // Simulando salvar em localStorage
+
     const alunos = JSON.parse(localStorage.getItem('alunos') || '[]');
     alunos.push(novoAluno);
     localStorage.setItem('alunos', JSON.stringify(alunos));
     
-    // Resetar formulário e fechar modal
+
     setNome('');
     setEmail('');
     setTurmaId('');

@@ -5,24 +5,19 @@ import { Card } from '../common/Card';
 import { Button } from '../common/Button';
 import { ClipboardList, CheckCircle, XCircle } from 'lucide-react';
 
-/**
- * Página de tarefas destinada aos alunos. Exibe as atividades da turma
- * correspondente ao aluno logado, permitindo visualizar detalhes e
- * submeter respostas. O status de cada atividade é indicado conforme
- * a presença ou não de submissão prévia.
- */
+
 export const TarefasAluno: React.FC = () => {
   const { user } = useAuth();
-  // Identifica a turma do aluno autenticado
+
   const aluno = mockAlunos.find(a => a.id === user?.id);
-  // Filtra atividades da turma do aluno
+
   const atividadesDaTurma = mockAtividades.filter(a => a.turmaId === aluno?.turmaId);
-  // Estado local para controlar entrada de conteúdo de submissões
+
   const [conteudos, setConteudos] = useState<{ [key: string]: string }>({});
   const handleChange = (atividadeId: string, value: string) => {
     setConteudos({ ...conteudos, [atividadeId]: value });
   };
-  // Envia uma submissão para determinada atividade
+
   const handleSubmit = (atividadeId: string) => {
     if (!user) return;
     const conteudo = conteudos[atividadeId];
@@ -35,7 +30,7 @@ export const TarefasAluno: React.FC = () => {
       dataEnvio: new Date().toISOString()
     };
     mockSubmissoes.push(novaSub);
-    // Limpa a entrada específica
+
     setConteudos({ ...conteudos, [atividadeId]: '' });
   };
   return (

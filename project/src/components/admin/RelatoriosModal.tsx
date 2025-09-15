@@ -12,7 +12,7 @@ interface RelatoriosModalProps {
 export const RelatoriosModal: React.FC<RelatoriosModalProps> = ({ isOpen, onClose }) => {
   const [tipoRelatorio, setTipoRelatorio] = useState('');
   
-  // Dados para os relatórios
+
   const relatoriosTurmas = {
     totalTurmas: mockTurmas.length,
     turmasMaiores: mockTurmas.map(t => ({

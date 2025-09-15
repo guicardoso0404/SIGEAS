@@ -4,27 +4,22 @@ import { useAuth } from '../../hooks/useAuth';
 import { mockNotas } from '../../data/mockData';
 import { Nota } from '../../types';
 
-/**
- * Página que lista as notas lançadas para o aluno autenticado. Cada
- * registro apresenta a disciplina, as duas notas, a média final e o
- * status de aprovação. Caso não exista nenhuma nota, informa o
- * usuário sobre a ausência de lançamentos.
- */
+
 export const MinhasNotas: React.FC = () => {
   const { user } = useAuth();
   const [notasAluno, setNotasAluno] = useState<Nota[]>([]);
   
   useEffect(() => {
-    // Carregar notas do localStorage
+
     const savedNotas = localStorage.getItem('sigeas_notas');
     
     if (savedNotas) {
       const notas = JSON.parse(savedNotas) as Nota[];
-      // Filtrar apenas as notas do aluno atual
+
       const notasDoAluno = notas.filter(n => n.alunoId === user?.id);
       setNotasAluno(notasDoAluno);
     } else {
-      // Fallback para os dados mockados
+
       setNotasAluno(mockNotas.filter(n => n.alunoId === user?.id));
     }
   }, [user?.id]);

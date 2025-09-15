@@ -3,24 +3,16 @@ import { Users, User, BookOpen } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { mockAlunos, mockTurmas, mockProfessores } from '../../data/mockData';
 
-/**
- * Exibe as informações da turma do aluno logado. A partir do usuário
- * autenticado, procura o cadastro do aluno, determina a turma em que
- * ele está matriculado e lista detalhes como nome, série, ano letivo e
- * professor responsável. Também apresenta uma relação simplificada
- * dos colegas de classe. Se o aluno não possuir turma associada,
- * é exibida uma mensagem informando a ausência de matrícula.
- */
+
 export const MinhaTurma: React.FC = () => {
   const { user } = useAuth();
 
-  // Localiza o registro do aluno com base no usuário autenticado
   const aluno = mockAlunos.find(a => a.id === user?.id);
-  // Descobre a turma do aluno, se houver
+
   const turma = mockTurmas.find(t => t.id === aluno?.turmaId);
-  // Professor associado à turma
+
   const professor = mockProfessores.find(p => p.id === turma?.professorId);
-  // Lista de colegas na mesma turma
+
   const colegas = mockAlunos.filter(a => a.turmaId === turma?.id);
 
   return (
