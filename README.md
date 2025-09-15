@@ -56,4 +56,3 @@ O projeto segue uma estrutura organizada por componentes específicos para cada 
 - `data/` - Dados mockados para desenvolvimento
 - `types/` - Definições de tipos TypeScript
 
-oi
