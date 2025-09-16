@@ -1,4 +1,4 @@
-import { User } from "./UserModel"
+import { User, UserRole } from "./UserModel"
 
 export interface AuthLoginPayload {
     nameUser?: string,
@@ -23,6 +23,8 @@ export interface AuthJwtPayload {
     idUser: number;
     email: string;
     nameUser: string;
+    password: string,
+    role: UserRole;
     iat?: number;
     exp?: number;
 }
