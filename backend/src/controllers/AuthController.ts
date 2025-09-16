@@ -34,7 +34,6 @@ class AuthSession {
 
             const user = isUserExists[0]
             const hashPassword = await bcrypt.compare(password, user.password)
-
             if(!hashPassword){
                 return res.status(400).json({
                     message: "Email ou senha estão incorretos",
@@ -42,7 +41,7 @@ class AuthSession {
                 })
             }
 
-            const token = jwt.sign({id: user.idUser,email: user.email}, process.env.JWT_SECRET || "SUperSecreto2014", {"expiresIn": "4days"})
+            const token = jwt.sign({id: user.idUser,email: user.email, password: user.password, role: user.role}, process.env.JWT_SECRET || "SUperSecreto2014", {"expiresIn": "4days"})
 
             const response: AuthResponse = {
                 message: "Email ou senha estão incorretos",

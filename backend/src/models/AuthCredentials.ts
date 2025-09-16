@@ -6,15 +6,3 @@ interface AuthCredentials {
 }
 
 export type { AuthCredentials }
-
-interface AuthResponse {
-    token: string;
-    user: User;
-}
-interface AuthError {
-    message: string;
-    status: number;
-
-}
-
-export type { AuthResponse, AuthError}

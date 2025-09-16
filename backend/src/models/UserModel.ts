@@ -4,7 +4,7 @@ interface BaseUser {
     idUser: number;
     nameUser: string;
     email: string;
-    password?: string
+    password: string
     age: number;
     role: UserRole;
 }

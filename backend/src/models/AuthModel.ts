@@ -9,10 +9,15 @@ export interface AuthLoginPayload {
 // export interface AuthTokenPayload {
 
 // }
+export interface AuthError {
+    message: string;
+    success: boolean;
+
+}
 
 export interface AuthResponse {
     message: string,
-    success: false,
+    success: boolean,
     data?: {
         user: User,
         token: string
@@ -25,6 +30,10 @@ export interface AuthJwtPayload {
     nameUser: string;
     password: string,
     role: UserRole;
-    iat?: number;
-    exp?: number;
+}
+
+export interface AuthResponseSuccess {
+    message: string,
+    success: boolean,
+    data?: User
 }

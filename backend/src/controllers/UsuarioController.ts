@@ -2,23 +2,30 @@ import { Request, Response } from "express";
 import { db } from "../config/promise";
 import { User } from "../models/UserModel";
 import { AuthenticatedRequest } from "../middleware/AuthMiddleware";
+import { AuthError, AuthResponseSuccess } from "../models/AuthModel";
 
 class UserController {
     async getAllUsers(req: Request, res: Response) {
+        const responseError = {
+            message: "Sucesso ao exibir todos os Usuários!",
+            success: false
+        } as AuthError
+
         try {
             const [rows] = await db.query("SELECT * FROM Users")
             const users = rows as User[]
-            return res.status(200).json({
+
+            const responseSuccess = {
                 message: "Sucesso ao exibir todos os usuários!",
                 success: true,
                 data: users[0]
-            })
+            } as AuthResponseSuccess
+    
+
+            return res.status(200).json(responseSuccess)
         } catch (error) {
             console.error("Erro ao buscar usuários", error)
-            return res.status(500).json({
-                message: "Erro interno ao buscar usuários",
-                success: false,
-            })
+            return res.status(500).json(responseError)
         }
     }
 
@@ -64,7 +71,7 @@ class UserController {
 
             if(isAlreadyCreatedUser.length > 0) {
                 return res.status(409).json({
-                    message: "Categoria já existe",
+                    message: "Usuário já existe",
                     success: false
                 })
             }
@@ -83,6 +90,11 @@ class UserController {
     }
     
     async updateUserEmail(req: AuthenticatedRequest, res: Response) {
+        const responseNotFound = {
+            message: "Usuário não existe.",
+            success: false,
+        } as AuthError
+
         const userId = req.data?.idUser
         const {email} = req.body
 
@@ -95,12 +107,52 @@ class UserController {
 
         try {
             const [rows] = await db.query(`
-            SELECT * 
+            SELECT idUser, email
             FROM Users
             WHERE userId = 
             `, [userId])
+            const user = rows as User[]
 
+            if(user.length === 0){
+                return res.status(400).json(responseNotFound)
+            }
+
+            const [updatingUserEmail] = await db.query(`
+            UPDATED User
+                SET email = ?
+            WHERE idUser = w
+                `, [email,userId])
+                const responseSuccess = {
+                    message: "Sucesso ao atualizar o email do usuário.",
+                    success: true,
+                    data: updatingUserEmail as User[]
+                }
             
+            return res.status(200).json(responseSuccess)
+        } catch (error) {
+            console.error("Erro ao atualizar o email do usuário: ", error)
+            return res.status(500).json(
+                { message: 'Erro interno ao atualizar usuário', success: false } as AuthError
+            );
+
+        }
+    } 
+
+    async updateUserNameUser(req: AuthenticatedRequest, res: Response){
+        const userId = req.data?.idUser
+        const {nameUser} = req.body
+
+        if(!nameUser || !userId){
+            return res.status(400).json({
+                message: "Preencha todos os dados.",
+                success: false,
+            } as AuthError)
+        }
+
+        try {
+            const [rows] = await db.query(`
+            SELECT * FROM Users WHERE userId = ?
+            `)
         } catch (error) {
             
         }
