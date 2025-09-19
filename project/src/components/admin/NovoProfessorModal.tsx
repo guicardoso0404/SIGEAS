@@ -2,38 +2,48 @@ import React, { useState } from 'react';
 import { User } from 'lucide-react';
 import { Modal } from '../common/Modal';
 import { motion } from 'framer-motion';
+import { userService } from '../../services/userService';
 
 interface NovoProfessorModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onSuccess?: () => void;
 }
 
-export const NovoProfessorModal: React.FC<NovoProfessorModalProps> = ({ isOpen, onClose }) => {
+export const NovoProfessorModal: React.FC<NovoProfessorModalProps> = ({ isOpen, onClose, onSuccess }) => {
   const [nome, setNome] = useState('');
   const [email, setEmail] = useState('');
   const [disciplina, setDisciplina] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsLoading(true);
     
-
-    const novoProfessor = {
-      id: Date.now().toString(),
-      nome,
-      email,
-      disciplina
-    };
-    
-    // Simulando salvar em localStorage
-    const professores = JSON.parse(localStorage.getItem('professores') || '[]');
-    professores.push(novoProfessor);
-    localStorage.setItem('professores', JSON.stringify(professores));
-    
-
-    setNome('');
-    setEmail('');
-    setDisciplina('');
-    onClose();
+    try {
+      const response = await userService.createUser({
+        nameUser: nome,
+        email,
+        password: '123456', // Senha padrão inicial
+        age: 0, // Campo obrigatório mas não temos no formulário
+        role: 'teacher'
+      });
+      
+      // Se a criação for bem sucedida e o callback existir, chamar
+      if (response.success && onSuccess) {
+        onSuccess();
+      }
+      
+      setNome('');
+      setEmail('');
+      setDisciplina('');
+      onClose();
+    } catch (error) {
+      console.error("Erro ao cadastrar professor:", error);
+      alert("Erro ao cadastrar professor. Verifique os dados e tente novamente.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -118,9 +128,10 @@ export const NovoProfessorModal: React.FC<NovoProfessorModalProps> = ({ isOpen, 
               type="submit"
               whileHover={{ scale: 1.03 }}
               whileTap={{ scale: 0.98 }}
-              className="px-4 py-2 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg hover:shadow-lg transition"
+              disabled={isLoading}
+              className={`px-4 py-2 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg hover:shadow-lg transition ${isLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
             >
-              Cadastrar Professor
+              {isLoading ? 'Cadastrando...' : 'Cadastrar Professor'}
             </motion.button>
           </div>
         </form>

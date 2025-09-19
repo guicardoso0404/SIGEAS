@@ -83,6 +83,9 @@ export interface SubmissaoAtividade {
 
 export interface AuthContextType {
   user: User | null;
-  login: (email: string, senha: string) => boolean;
+  login: (email: string, senha: string) => Promise<boolean>;
   logout: () => void;
+  loading: boolean;
+  error: string | null;
+  checkSavedUser: () => Promise<void>;
 }

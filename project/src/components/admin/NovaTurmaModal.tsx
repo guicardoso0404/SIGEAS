@@ -1,58 +1,103 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { BookOpen, X, Save } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
-import { mockTurmas, mockProfessores } from '../../data/mockData';
 import { Modal } from '../common/Modal';
-import { Turma } from '../../types';
+import { turmaService } from '../../services/turmaService';
+import api from '../../services/api';
 
 interface NovaTurmaProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
-
-const generateId = () => {
-  return Date.now().toString(36) + Math.random().toString(36).substring(2);
-};
+interface Professor {
+  id: string;
+  nome: string;
+  disciplina?: string;
+}
 
 export const NovaTurmaModal: React.FC<NovaTurmaProps> = ({ isOpen, onClose }) => {
-  // Remove unused user variable
-  useAuth(); // Keep the hook for context
+  const { user } = useAuth(); // Manter o hook para contexto
   const [nome, setNome] = useState('');
   const [serie, setSerie] = useState('');
   const [ano, setAno] = useState(new Date().getFullYear());
   const [professorId, setProfessorId] = useState('');
+  const [professores, setProfessores] = useState<Professor[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [loadingProfessores, setLoadingProfessores] = useState(false);
 
-  const handleSaveTurma = () => {
+  // Carregar lista de professores
+  useEffect(() => {
+    if (isOpen) {
+      const fetchProfessores = async () => {
+        setLoadingProfessores(true);
+        try {
+          // Como não temos um endpoint específico para professores, usaremos users com filtro no frontend
+          const response = await api.get('/users');
+          if (response.success && response.data) {
+            // Filtrar apenas usuários com role 'teacher'
+            const professoresData = response.data
+              .filter((user: any) => user.role === 'teacher')
+              .map((professor: any) => ({
+                id: professor.idUser.toString(),
+                nome: professor.nameUser,
+                disciplina: professor.subject || 'Geral'
+              }));
+            
+            setProfessores(professoresData);
+          }
+        } catch (error) {
+          console.error('Erro ao carregar professores:', error);
+        } finally {
+          setLoadingProfessores(false);
+        }
+      };
+      
+      fetchProfessores();
+    }
+  }, [isOpen]);
+
+  const handleSaveTurma = async () => {
     if (!nome || !serie) {
       alert('Preencha todos os campos obrigatórios');
       return;
     }
 
+    if (!professorId) {
+      alert('Selecione um professor responsável');
+      return;
+    }
 
-    const novaTurma: Turma = {
-      id: generateId(),
-      nome,
-      serie,
-      ano,
-      professorId: professorId || undefined
-    };
-
-
-    const existingTurmas = JSON.parse(localStorage.getItem('sigeas_turmas') || JSON.stringify(mockTurmas));
+    setLoading(true);
     
-
-    const turmasAtualizadas = [...existingTurmas, novaTurma];
-    
-
-    localStorage.setItem('sigeas_turmas', JSON.stringify(turmasAtualizadas));
-    
-    alert('Turma criada com sucesso!');
-    setNome('');
-    setSerie('');
-    setAno(new Date().getFullYear());
-    setProfessorId('');
-    onClose();
+    try {
+      // Preparar dados para API
+      const novaTurmaData = {
+        className: nome,
+        teacherId: parseInt(professorId),
+        subject: serie
+      };
+      
+      // Enviar para a API
+      const response = await turmaService.createClass(novaTurmaData);
+      
+      if (response.success) {
+        alert('Turma criada com sucesso!');
+        // Limpar formulário
+        setNome('');
+        setSerie('');
+        setAno(new Date().getFullYear());
+        setProfessorId('');
+        onClose();
+      } else {
+        alert(`Erro ao criar turma: ${response.message}`);
+      }
+    } catch (error) {
+      console.error('Erro ao criar turma:', error);
+      alert('Erro ao criar turma. Por favor, tente novamente.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -117,35 +162,49 @@ export const NovaTurmaModal: React.FC<NovaTurmaProps> = ({ isOpen, onClose }) =>
             <label htmlFor="professor" className="block text-sm font-medium text-gray-700 mb-1">
               Professor Responsável
             </label>
-            <select
-              id="professor"
-              value={professorId}
-              onChange={(e) => setProfessorId(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">Selecione um professor</option>
-              {mockProfessores.map(professor => (
-                <option key={professor.id} value={professor.id}>
-                  {professor.nome} - {professor.disciplina}
-                </option>
-              ))}
-            </select>
+            {loadingProfessores ? (
+              <div className="h-10 flex items-center text-sm text-gray-500">
+                Carregando professores...
+              </div>
+            ) : (
+              <select
+                id="professor"
+                value={professorId}
+                onChange={(e) => setProfessorId(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">Selecione um professor</option>
+                {professores.map(professor => (
+                  <option key={professor.id} value={professor.id}>
+                    {professor.nome} {professor.disciplina ? `- ${professor.disciplina}` : ''}
+                  </option>
+                ))}
+              </select>
+            )}
           </div>
         </div>
 
         <div className="mt-6 flex justify-end">
           <button
             onClick={onClose}
+            disabled={loading}
             className="mr-4 px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"
           >
             Cancelar
           </button>
           <button
             onClick={handleSaveTurma}
-            className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 flex items-center transition-colors"
+            disabled={loading}
+            className={`${
+              loading ? 'bg-blue-400' : 'bg-blue-600 hover:bg-blue-700'
+            } text-white px-6 py-2 rounded-md flex items-center transition-colors`}
           >
-            <Save className="w-4 h-4 mr-2" />
-            <span>Criar Turma</span>
+            {loading ? (
+              <span className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></span>
+            ) : (
+              <Save className="w-4 h-4 mr-2" />
+            )}
+            <span>{loading ? 'Criando...' : 'Criar Turma'}</span>
           </button>
         </div>
       </div>

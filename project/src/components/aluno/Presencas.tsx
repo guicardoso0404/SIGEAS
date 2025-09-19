@@ -1,32 +1,56 @@
 import React, { useState, useEffect } from 'react';
 import { Calendar } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
-import { mockPresencas, mockTurmas } from '../../data/mockData';
 import { Presenca } from '../../types';
+import { presencaService } from '../../services/presencaService';
+import { turmaService } from '../../services/turmaService';
 
 
 export const Presencas: React.FC = () => {
   const { user } = useAuth();
   const [presencas, setPresencas] = useState<Presenca[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+  const [turmas, setTurmas] = useState<{[key: string]: string}>({});
   
   useEffect(() => {
-
-    const savedPresencas = localStorage.getItem('sigeas_presencas');
+    const fetchPresencas = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        
+        // Usar o serviço para buscar as presenças do aluno logado
+        const presencasData = await presencaService.getStudentAttendance();
+        
+        // Ordenar por data decrescente
+        const sortedPresencas = presencasData.sort(
+          (a, b) => new Date(b.data).getTime() - new Date(a.data).getTime()
+        );
+        
+        setPresencas(sortedPresencas);
+        
+        // Buscar informações das turmas para exibir os nomes
+        try {
+          const turmasData = await turmaService.getAllClasses();
+          const turmasObj: {[key: string]: string} = {};
+          turmasData.forEach(turma => {
+            turmasObj[turma.id] = turma.nome;
+          });
+          setTurmas(turmasObj);
+        } catch (err) {
+          console.error('Erro ao buscar turmas:', err);
+          // Não interromper o fluxo principal se as turmas não forem carregadas
+        }
+      } catch (err) {
+        console.error('Erro ao buscar presenças do aluno:', err);
+        setError('Não foi possível carregar seus registros de presença. Tente novamente mais tarde.');
+      } finally {
+        setLoading(false);
+      }
+    };
     
-    if (savedPresencas) {
-      const todasPresencas = JSON.parse(savedPresencas) as Presenca[];
-
-      const presencasDoAluno = todasPresencas
-        .filter(p => p.alunoId === user?.id)
-        .sort((a, b) => new Date(b.data).getTime() - new Date(a.data).getTime());
-      setPresencas(presencasDoAluno);
-    } else {
-
-      setPresencas(
-        mockPresencas
-          .filter(p => p.alunoId === user?.id)
-          .sort((a, b) => new Date(b.data).getTime() - new Date(a.data).getTime())
-      );
+    if (user?.id) {
+      fetchPresencas();
     }
   }, [user?.id]);
 
@@ -36,8 +60,7 @@ export const Presencas: React.FC = () => {
   const percentual = totalAulas > 0 ? (totalPresencas / totalAulas) * 100 : 0;
 
   const getTurmaNome = (turmaId: string) => {
-    const turma = mockTurmas.find(t => t.id === turmaId);
-    return turma ? turma.nome : '-';
+    return turmas[turmaId] || 'Turma não encontrada';
   };
 
   return (
@@ -51,7 +74,16 @@ export const Presencas: React.FC = () => {
           <Calendar className="w-5 h-5 mr-2 text-blue-600" />
           Histórico de Presenças
         </h3>
-        {presencas.length > 0 ? (
+        
+        {loading ? (
+          <div className="py-8 flex justify-center">
+            <div className="animate-pulse text-gray-500">Carregando registros de presença...</div>
+          </div>
+        ) : error ? (
+          <div className="p-4 bg-red-50 text-red-700 rounded-md">
+            {error}
+          </div>
+        ) : presencas.length > 0 ? (
           <div className="space-y-3">
             {presencas.map(presenca => (
               <div key={presenca.id} className="flex justify-between items-center p-3 bg-gray-50 rounded-md">
@@ -73,14 +105,17 @@ export const Presencas: React.FC = () => {
         ) : (
           <p className="text-gray-500 text-sm">Nenhuma presença registrada até o momento.</p>
         )}
+        
         {/* Resumo */}
-        <div className="mt-6 pt-4 border-t border-gray-200 text-sm">
-          <div className="flex justify-between">
-            <span className="text-gray-600">Total de aulas: {totalAulas}</span>
-            <span className="text-gray-600">Presenças: {totalPresencas}</span>
-            <span className={`font-medium ${percentual >= 75 ? 'text-green-600' : 'text-red-600'}`}>{percentual.toFixed(0)}%</span>
+        {!loading && !error && (
+          <div className="mt-6 pt-4 border-t border-gray-200 text-sm">
+            <div className="flex justify-between">
+              <span className="text-gray-600">Total de aulas: {totalAulas}</span>
+              <span className="text-gray-600">Presenças: {totalPresencas}</span>
+              <span className={`font-medium ${percentual >= 75 ? 'text-green-600' : 'text-red-600'}`}>{percentual.toFixed(0)}%</span>
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );

@@ -1,40 +1,68 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { GraduationCap } from 'lucide-react';
 import { Modal } from '../common/Modal';
 import { motion } from 'framer-motion';
-import { mockTurmas } from '../../data/mockData';
+import { userService } from '../../services/userService';
+import { turmaService } from '../../services/turmaService';
+import { Turma } from '../../types';
 
 interface NovoAlunoModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onSuccess?: () => void;
 }
 
-export const NovoAlunoModal: React.FC<NovoAlunoModalProps> = ({ isOpen, onClose }) => {
+export const NovoAlunoModal: React.FC<NovoAlunoModalProps> = ({ isOpen, onClose, onSuccess }) => {
   const [nome, setNome] = useState('');
   const [email, setEmail] = useState('');
   const [turmaId, setTurmaId] = useState('');
+  const [turmas, setTurmas] = useState<Turma[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-  
-    const novoAluno = {
-      id: Date.now().toString(),
-      nome,
-      email,
-      turmaId
+  useEffect(() => {
+    const fetchTurmas = async () => {
+      try {
+        const turmas = await turmaService.getAllClasses();
+        setTurmas(turmas);
+      } catch (error) {
+        console.error("Erro ao buscar turmas:", error);
+      }
     };
-    
 
-    const alunos = JSON.parse(localStorage.getItem('alunos') || '[]');
-    alunos.push(novoAluno);
-    localStorage.setItem('alunos', JSON.stringify(alunos));
-    
+    if (isOpen) {
+      fetchTurmas();
+    }
+  }, [isOpen]);
 
-    setNome('');
-    setEmail('');
-    setTurmaId('');
-    onClose();
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    
+    try {
+      // Criar o usuário aluno
+      const response = await userService.createUser({
+        nameUser: nome,
+        email,
+        password: '123456', // Senha padrão inicial
+        age: 0, // Campo obrigatório mas não temos no formulário
+        role: 'student'
+      });
+      
+      // Se a matrícula for bem sucedida e o callback existir, chamar
+      if (response.success && onSuccess) {
+        onSuccess();
+      }
+      
+      setNome('');
+      setEmail('');
+      setTurmaId('');
+      onClose();
+    } catch (error) {
+      console.error("Erro ao cadastrar aluno:", error);
+      alert("Erro ao cadastrar aluno. Verifique os dados e tente novamente.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -89,7 +117,7 @@ export const NovoAlunoModal: React.FC<NovoAlunoModalProps> = ({ isOpen, onClose 
               required
             >
               <option value="">Selecione uma turma</option>
-              {mockTurmas.map(turma => (
+              {turmas.map(turma => (
                 <option key={turma.id} value={turma.id}>
                   {turma.nome} - {turma.serie} {turma.ano}
                 </option>
@@ -112,9 +140,10 @@ export const NovoAlunoModal: React.FC<NovoAlunoModalProps> = ({ isOpen, onClose 
               type="submit"
               whileHover={{ scale: 1.03 }}
               whileTap={{ scale: 0.98 }}
-              className="px-4 py-2 bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-lg hover:shadow-lg transition"
+              disabled={isLoading}
+              className={`px-4 py-2 bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-lg hover:shadow-lg transition ${isLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
             >
-              Matricular Aluno
+              {isLoading ? 'Matriculando...' : 'Matricular Aluno'}
             </motion.button>
           </div>
         </form>

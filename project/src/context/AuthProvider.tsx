@@ -1,20 +1,31 @@
 import React, { ReactNode, useEffect } from 'react';
 import { useAuthProvider } from '../hooks/useAuth';
+import { AuthContextType } from '../types';
 
 interface AuthProviderProps {
   children: ReactNode;
 }
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
-  const authProvider = useAuthProvider();
+  const auth = useAuthProvider();
 
   useEffect(() => {
-    authProvider.checkSavedUser();
-  }, []);
+    auth.checkSavedUser();
+  }, [auth.checkSavedUser]);
+
+  // Selecionamos apenas os campos que queremos expor no contexto
+  const authContextValue: AuthContextType = {
+    user: auth.user,
+    login: auth.login,
+    logout: auth.logout,
+    loading: auth.loading,
+    error: auth.error,
+    checkSavedUser: auth.checkSavedUser
+  };
 
   return (
-    <authProvider.AuthContext.Provider value={authProvider}>
+    <auth.AuthContext.Provider value={authContextValue}>
       {children}
-    </authProvider.AuthContext.Provider>
+    </auth.AuthContext.Provider>
   );
 };

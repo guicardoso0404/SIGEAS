@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Calendar, Users, Check, X, Save } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
-import { mockTurmas, mockAlunos } from '../../data/mockData';
 import { Modal } from '../common/Modal';
-import { Presenca } from '../../types';
+import { presencaService, AttendanceData } from '../../services/presencaService';
+import { turmaService } from '../../services/turmaService';
 
 interface LancarChamadaModalProps {
   isOpen: boolean;
@@ -14,28 +14,85 @@ interface ChamadaData {
   [alunoId: string]: boolean;
 }
 
+interface Turma {
+  id: string;
+  nome: string;
+  serie?: string;
+  professorId?: string;
+}
 
-const generateId = () => {
-  return Date.now().toString(36) + Math.random().toString(36).substring(2);
-};
+interface Aluno {
+  id: string;
+  nome: string;
+  email: string;
+  turmaId: string;
+}
 
 export const LancarChamadaModal: React.FC<LancarChamadaModalProps> = ({ isOpen, onClose }) => {
   const { user } = useAuth();
   const [selectedTurma, setSelectedTurma] = useState('');
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [chamadaData, setChamadaData] = useState<ChamadaData>({});
+  const [turmas, setTurmas] = useState<Turma[]>([]);
+  const [alunos, setAlunos] = useState<Aluno[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [loadingTurmas, setLoadingTurmas] = useState(false);
+  const [loadingAlunos, setLoadingAlunos] = useState(false);
 
+  // Carregar turmas do professor quando o modal abrir
   useEffect(() => {
     if (isOpen) {
-      const professorTurmas = mockTurmas.filter(t => t.professorId === user?.id);
-      if (professorTurmas.length > 0) {
-        setSelectedTurma(professorTurmas[0].id);
+      const fetchTurmas = async () => {
+        setLoadingTurmas(true);
+        try {
+          const data = await turmaService.getTeacherClasses();
+          setTurmas(data);
+          
+          if (data.length > 0) {
+            setSelectedTurma(data[0].id);
+          }
+        } catch (error) {
+          console.error('Erro ao carregar turmas:', error);
+        } finally {
+          setLoadingTurmas(false);
+        }
+      };
+
+      if (user?.id) {
+        fetchTurmas();
       }
     }
   }, [isOpen, user?.id]);
 
-  const professorTurmas = mockTurmas.filter(t => t.professorId === user?.id);
-  const alunosTurma = selectedTurma ? mockAlunos.filter(a => a.turmaId === selectedTurma) : [];
+  // Carregar alunos da turma selecionada
+  useEffect(() => {
+    const fetchAlunos = async () => {
+      if (!selectedTurma) return;
+      
+      setLoadingAlunos(true);
+      try {
+        const data = await turmaService.getClassStudents(selectedTurma);
+        setAlunos(data);
+        
+        // Verificar se já existem presenças registradas para esta data
+        const presencas = await presencaService.getAttendanceByClassAndDate(selectedTurma, selectedDate);
+        
+        // Preparar os dados da chamada baseado nas presenças já registradas
+        const chamadaAtual: ChamadaData = {};
+        presencas.forEach(p => {
+          chamadaAtual[p.alunoId] = p.presente;
+        });
+        
+        setChamadaData(chamadaAtual);
+      } catch (error) {
+        console.error('Erro ao carregar alunos:', error);
+      } finally {
+        setLoadingAlunos(false);
+      }
+    };
+
+    fetchAlunos();
+  }, [selectedTurma, selectedDate]);
 
   const handlePresencaChange = (alunoId: string, presente: boolean) => {
     setChamadaData(prev => ({
@@ -44,7 +101,7 @@ export const LancarChamadaModal: React.FC<LancarChamadaModalProps> = ({ isOpen, 
     }));
   };
 
-  const handleSaveChamada = () => {
+  const handleSaveChamada = async () => {
     if (!selectedTurma) {
       alert('Selecione uma turma primeiro');
       return;
@@ -54,41 +111,40 @@ export const LancarChamadaModal: React.FC<LancarChamadaModalProps> = ({ isOpen, 
       alert('Erro: Usuário não identificado');
       return;
     }
-
-    const existingPresencas = JSON.parse(localStorage.getItem('sigeas_presencas') || '[]') as Presenca[];
     
-
-    const novasPresencas: Presenca[] = Object.keys(chamadaData).map(alunoId => {
-      return {
-        id: generateId(),
-        alunoId,
-        turmaId: selectedTurma,
-        data: selectedDate,
-        presente: chamadaData[alunoId],
-        professorId: user.id
+    setLoading(true);
+    
+    try {
+      // Converter o formato de dados para o formato da API
+      const attendanceData: AttendanceData = {
+        classId: parseInt(selectedTurma),
+        date: selectedDate,
+        attendanceData: Object.keys(chamadaData).map(alunoId => ({
+          studentId: parseInt(alunoId),
+          status: chamadaData[alunoId] ? 'present' : 'absent'
+        }))
       };
-    });
-    
-
-    const presencasAtualizadas = [
-      ...existingPresencas.filter((p: Presenca) => 
-        p.turmaId !== selectedTurma || 
-        p.data !== selectedDate || 
-        !Object.keys(chamadaData).includes(p.alunoId)
-      ),
-      ...novasPresencas
-    ];
-    
-
-    localStorage.setItem('sigeas_presencas', JSON.stringify(presencasAtualizadas));
-    
-    alert('Chamada salva com sucesso!');
-    setChamadaData({});
-    onClose();
+      
+      // Enviar os dados para a API
+      const response = await presencaService.recordAttendance(attendanceData);
+      
+      if (response.success) {
+        alert('Chamada salva com sucesso!');
+        setChamadaData({});
+        onClose();
+      } else {
+        alert(`Erro ao salvar chamada: ${response.message}`);
+      }
+    } catch (error) {
+      console.error('Erro ao salvar chamada:', error);
+      alert('Erro ao salvar chamada. Tente novamente.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const getTurmaName = (turmaId: string) => {
-    const turma = mockTurmas.find(t => t.id === turmaId);
+    const turma = turmas.find(t => t.id === turmaId);
     return turma ? turma.nome : '';
   };
 
@@ -113,22 +169,28 @@ export const LancarChamadaModal: React.FC<LancarChamadaModalProps> = ({ isOpen, 
             <label htmlFor="turma" className="block text-sm font-medium text-gray-700 mb-2">
               Selecionar Turma
             </label>
-            <select
-              id="turma"
-              value={selectedTurma}
-              onChange={(e) => {
-                setSelectedTurma(e.target.value);
-                setChamadaData({});
-              }}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">Selecione uma turma</option>
-              {professorTurmas.map(turma => (
-                <option key={turma.id} value={turma.id}>
-                  {turma.nome} - {turma.serie}
-                </option>
-              ))}
-            </select>
+            {loadingTurmas ? (
+              <div className="h-10 flex items-center text-sm text-gray-500">
+                Carregando turmas...
+              </div>
+            ) : (
+              <select
+                id="turma"
+                value={selectedTurma}
+                onChange={(e) => {
+                  setSelectedTurma(e.target.value);
+                  setChamadaData({});
+                }}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">Selecione uma turma</option>
+                {turmas.map(turma => (
+                  <option key={turma.id} value={turma.id}>
+                    {turma.nome} - {turma.serie}
+                  </option>
+                ))}
+              </select>
+            )}
           </div>
 
           <div>
@@ -157,53 +219,72 @@ export const LancarChamadaModal: React.FC<LancarChamadaModalProps> = ({ isOpen, 
               </div>
             </div>
 
-            <div className="space-y-3 max-h-96 overflow-y-auto">
-              {alunosTurma.map(aluno => (
-                <div key={aluno.id} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
-                  <div className="flex items-center">
-                    <Users className="w-5 h-5 text-gray-400 mr-3" />
-                    <div>
-                      <p className="font-medium text-gray-900">{aluno.nome}</p>
-                      <p className="text-sm text-gray-600">{aluno.email}</p>
+            {loadingAlunos ? (
+              <div className="py-8 flex justify-center">
+                <div className="animate-pulse text-gray-500">Carregando alunos...</div>
+              </div>
+            ) : (
+              <div className="space-y-3 max-h-96 overflow-y-auto">
+                {alunos.map(aluno => (
+                  <div key={aluno.id} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
+                    <div className="flex items-center">
+                      <Users className="w-5 h-5 text-gray-400 mr-3" />
+                      <div>
+                        <p className="font-medium text-gray-900">{aluno.nome}</p>
+                        <p className="text-sm text-gray-600">{aluno.email}</p>
+                      </div>
+                    </div>
+
+                    <div className="flex space-x-2">
+                      <button
+                        onClick={() => handlePresencaChange(aluno.id, true)}
+                        className={`flex items-center px-3 py-2 rounded-md transition-colors ${
+                          chamadaData[aluno.id] === true
+                            ? 'bg-green-100 text-green-700 border-green-300'
+                            : 'bg-gray-100 text-gray-600 hover:bg-green-50'
+                        } border`}
+                      >
+                        <Check className="w-4 h-4 mr-1" />
+                        Presente
+                      </button>
+                      <button
+                        onClick={() => handlePresencaChange(aluno.id, false)}
+                        className={`flex items-center px-3 py-2 rounded-md transition-colors ${
+                          chamadaData[aluno.id] === false
+                            ? 'bg-red-100 text-red-700 border-red-300'
+                            : 'bg-gray-100 text-gray-600 hover:bg-red-50'
+                        } border`}
+                      >
+                        <X className="w-4 h-4 mr-1" />
+                        Falta
+                      </button>
                     </div>
                   </div>
+                ))}
 
-                  <div className="flex space-x-2">
-                    <button
-                      onClick={() => handlePresencaChange(aluno.id, true)}
-                      className={`flex items-center px-3 py-2 rounded-md transition-colors ${
-                        chamadaData[aluno.id] === true
-                          ? 'bg-green-100 text-green-700 border-green-300'
-                          : 'bg-gray-100 text-gray-600 hover:bg-green-50'
-                      } border`}
-                    >
-                      <Check className="w-4 h-4 mr-1" />
-                      Presente
-                    </button>
-                    <button
-                      onClick={() => handlePresencaChange(aluno.id, false)}
-                      className={`flex items-center px-3 py-2 rounded-md transition-colors ${
-                        chamadaData[aluno.id] === false
-                          ? 'bg-red-100 text-red-700 border-red-300'
-                          : 'bg-gray-100 text-gray-600 hover:bg-red-50'
-                      } border`}
-                    >
-                      <X className="w-4 h-4 mr-1" />
-                      Falta
-                    </button>
+                {alunos.length === 0 && (
+                  <div className="py-4 text-center text-gray-500">
+                    Nenhum aluno encontrado para esta turma.
                   </div>
-                </div>
-              ))}
-            </div>
+                )}
+              </div>
+            )}
 
-            {alunosTurma.length > 0 && (
+            {alunos.length > 0 && (
               <div className="mt-6 flex justify-end">
                 <button
                   onClick={handleSaveChamada}
-                  className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 flex items-center space-x-2 transition-colors"
+                  disabled={loading}
+                  className={`${
+                    loading ? 'bg-blue-400' : 'bg-blue-600 hover:bg-blue-700'
+                  } text-white px-6 py-2 rounded-md flex items-center space-x-2 transition-colors`}
                 >
-                  <Save className="w-4 h-4" />
-                  <span>Salvar Chamada</span>
+                  {loading ? (
+                    <span className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></span>
+                  ) : (
+                    <Save className="w-4 h-4 mr-2" />
+                  )}
+                  <span>{loading ? 'Salvando...' : 'Salvar Chamada'}</span>
                 </button>
               </div>
             )}

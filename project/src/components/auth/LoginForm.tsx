@@ -18,13 +18,17 @@ export const LoginForm: React.FC = () => {
     setError('');
     setLoading(true);
 
-    const success = login(formData.email, formData.senha);
-    
-    if (!success) {
-      setError('Email ou senha inválidos');
+    try {
+      const success = await login(formData.email, formData.senha);
+      
+      if (!success) {
+        setError('Email ou senha inválidos');
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erro ao fazer login');
+    } finally {
+      setLoading(false);
     }
-    
-    setLoading(false);
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
