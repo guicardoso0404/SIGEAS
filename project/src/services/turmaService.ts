@@ -47,12 +47,35 @@ class TurmaService {
   // Obter turmas de um professor
   async getClassesByTeacher(): Promise<Turma[]> {
     try {
-      const response = await api.get<ClassRoom[]>('/teacher/classes');
-      if (!response.data) return [];
+      console.log('🔍 TurmaService.getClassesByTeacher - Fazendo requisição para /teacher/classes');
       
-      return response.data.map(this.convertToFrontendTurma);
+      // Verificar se a instância da API tem token
+      console.log('🔍 TurmaService - Verificando token na API...', (api as any).token ? 'TOKEN PRESENTE' : 'TOKEN AUSENTE');
+      
+      // Verificar localStorage diretamente
+      const tokenFromStorage = localStorage.getItem('sigeas-token');
+      console.log('🔍 TurmaService - Token no localStorage:', tokenFromStorage ? 'PRESENTE' : 'AUSENTE');
+      
+      if (tokenFromStorage && !(api as any).token) {
+        console.log('🔧 TurmaService - Forçando token na instância da API');
+        (api as any).setToken(tokenFromStorage);
+      }
+      
+      const response = await api.get<ClassRoom[]>('/teacher/classes');
+      console.log('📊 TurmaService - Resposta recebida:', response);
+      
+      if (!response.data) {
+        console.log('⚠️ TurmaService - Nenhum dado retornado da API');
+        return [];
+      }
+      
+      console.log('📋 TurmaService - Dados das turmas recebidos:', response.data);
+      const turmasConvertidas = response.data.map(this.convertToFrontendTurma);
+      console.log('✅ TurmaService - Turmas convertidas:', turmasConvertidas);
+      
+      return turmasConvertidas;
     } catch (error) {
-      console.error('Erro ao buscar turmas do professor:', error);
+      console.error('❌ TurmaService - Erro ao buscar turmas do professor:', error);
       return [];
     }
   }

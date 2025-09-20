@@ -118,11 +118,11 @@ class ProfessoresController {
 
       // Buscar todos os alunos matriculados na turma
       const [students] = await db.query(`
-        SELECT u.idUser, u.nameUser, u.email, u.age, e.enrollmentDate, e.status
+        SELECT u.idUser, u.userName, u.email, u.age, e.enrollmentDate, e.status
         FROM User u
         JOIN Enrollment e ON u.idUser = e.studentId
         WHERE e.classId = ? AND u.role = 'student'
-        ORDER BY u.nameUser
+        ORDER BY u.userName
       `, [classId]);
 
       return res.status(200).json({

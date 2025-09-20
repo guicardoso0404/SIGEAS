@@ -52,6 +52,66 @@ class UserController {
         }
     }
 
+    // Novo método para obter dados do usuário logado
+    async getCurrentUser(req: AuthenticatedRequest, res: Response) {
+        console.log('👤 getCurrentUser - Iniciando busca do usuário logado');
+        const userId = req.data?.idUser;
+
+        console.log('🔍 getCurrentUser - ID do usuário:', userId);
+
+        if (!userId) {
+            console.log('❌ getCurrentUser - Usuário não autenticado');
+            return res.status(401).json({
+                success: false,
+                message: "Usuário não autenticado"
+            });
+        }
+
+        try {
+            console.log('🔍 getCurrentUser - Executando query...');
+            const [rows] = await db.query(`
+                SELECT idUser, userName, email, role
+                FROM User
+                WHERE idUser = ?
+            `, [userId]);
+            
+            const users = rows as User[];
+            console.log('📊 getCurrentUser - Resultado da query:', users);
+
+            if (users.length === 0) {
+                console.log('❌ getCurrentUser - Usuário não encontrado no banco');
+                return res.status(404).json({
+                    success: false,
+                    message: "Usuário não encontrado"
+                });
+            }
+
+            const user = users[0];
+            
+            // Mapear para o formato esperado pelo frontend
+            const responseUser = {
+                idUser: user.idUser,
+                nameUser: user.userName, // Mapeando userName para nameUser
+                email: user.email,
+                role: user.role
+            };
+            
+            console.log('✅ getCurrentUser - Retornando usuário:', responseUser);
+            
+            return res.status(200).json({
+                success: true,
+                message: "Dados do usuário recuperados com sucesso",
+                data: responseUser
+            });
+        } catch (error) {
+            console.error('❌ getCurrentUser - Erro ao buscar dados do usuário logado:', error);
+            return res.status(500).json({
+                success: false,
+                message: 'Erro interno do servidor'
+            });
+        }
+    }
+
     async createUser(req: Request, res: Response) {
         const {userName, email, password, role, age} = req.body
 

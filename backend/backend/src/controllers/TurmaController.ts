@@ -14,7 +14,7 @@ class TurmaController {
     async getAllClasses(req: Request, res: Response) {
         try {
             const [rows] = await db.query(`
-                SELECT c.*, u.nameUser as teacherName
+                SELECT c.*, u.userName as teacherName
                 FROM ClassRoom c
                 JOIN User u ON c.teacherId = u.idUser
             `);
@@ -46,7 +46,7 @@ class TurmaController {
 
         try {
             const [rows] = await db.query(`
-                SELECT c.*, u.nameUser as teacherName
+                SELECT c.*, u.userName as teacherName
                 FROM ClassRoom c
                 JOIN User u ON c.teacherId = u.idUser
                 WHERE c.idClass = ?
@@ -77,9 +77,13 @@ class TurmaController {
 
     // Buscar turmas de um professor
     async getClassesByTeacher(req: AuthenticatedRequest, res: Response) {
+        console.log('🎓 TurmaController.getClassesByTeacher - Iniciando busca de turmas');
         const teacherId = req.data?.idUser;
 
+        console.log('👤 Professor ID:', teacherId);
+
         if (!teacherId) {
+            console.log('❌ ID do professor não fornecido');
             return res.status(400).json({
                 success: false,
                 message: "ID do professor não fornecido"
@@ -87,12 +91,15 @@ class TurmaController {
         }
 
         try {
+            console.log('🔍 Executando query no banco de dados...');
             const [rows] = await db.query(`
-                SELECT c.*, u.nameUser as teacherName
+                SELECT c.*, u.userName as teacherName
                 FROM ClassRoom c
                 JOIN User u ON c.teacherId = u.idUser
                 WHERE c.teacherId = ?
             `, [teacherId]);
+            
+            console.log('📊 Turmas encontradas:', rows);
             
             return res.status(200).json({
                 success: true,
@@ -100,7 +107,7 @@ class TurmaController {
                 data: rows
             });
         } catch (error) {
-            console.error("Erro ao buscar turmas do professor:", error);
+            console.error("❌ Erro ao buscar turmas do professor:", error);
             return res.status(500).json({
                 success: false,
                 message: "Erro interno ao buscar turmas do professor"

@@ -22,13 +22,22 @@ export const useAuthProvider = () => {
     setError(null);
     
     try {
-      const { user } = await api.login(email, senha);
+      console.log('🚀 useAuth.login - Iniciando login...');
+      const { user, token } = await api.login(email, senha);
+      console.log('✅ useAuth.login - Login bem-sucedido:', user);
+      console.log('🔐 useAuth.login - Token recebido e salvo');
+      
       setUser(user);
       localStorage.setItem('sigeas-user', JSON.stringify(user));
+      
+      // Importante: Garantir que o token foi salvo corretamente
+      const savedToken = localStorage.getItem('sigeas-token');
+      console.log('🔍 useAuth.login - Token verificado no localStorage:', savedToken ? 'PRESENTE' : 'AUSENTE');
+      
       setLoading(false);
       return true;
     } catch (error) {
-      console.error('Erro no login:', error);
+      console.error('❌ useAuth.login - Erro no login:', error);
       setError(error instanceof Error ? error.message : 'Erro ao fazer login');
       setLoading(false);
       return false;
@@ -42,26 +51,32 @@ export const useAuthProvider = () => {
   }, []);
 
   const checkSavedUser = useCallback(async () => {
+    console.log('🔍 checkSavedUser - Iniciando verificação...');
     setLoading(true);
     
     try {
-      // Primeiro verificamos se há um token salvo e se ele é válido
-      const validatedUser = await api.validateToken();
-      if (validatedUser) {
-        setUser(validatedUser);
+      // Verificar se há um usuário salvo no localStorage primeiro
+      console.log('🔍 checkSavedUser - Verificando localStorage...');
+      const savedUser = localStorage.getItem('sigeas-user');
+      const savedToken = localStorage.getItem('sigeas-token');
+      
+      console.log('📦 checkSavedUser - Usuário no localStorage:', savedUser ? 'PRESENTE' : 'AUSENTE');
+      console.log('� checkSavedUser - Token no localStorage:', savedToken ? 'PRESENTE' : 'AUSENTE');
+      
+      if (savedUser && savedToken && !user) {
+        console.log('✅ checkSavedUser - Restaurando sessão do localStorage');
+        const parsedUser = JSON.parse(savedUser);
+        setUser(parsedUser);
         setLoading(false);
         return;
       }
       
-      // Se não, tentamos ver se há um usuário salvo no localStorage
-      const savedUser = localStorage.getItem('sigeas-user');
-      if (savedUser && !user) {
-        const parsedUser = JSON.parse(savedUser);
-        setUser(parsedUser);
-      }
+      // Se não há dados salvos, apenas continue
+      console.log('❌ checkSavedUser - Nenhuma sessão salva encontrada');
     } catch (error) {
-      console.error('Erro ao verificar usuário salvo:', error);
+      console.error('❌ checkSavedUser - Erro ao verificar usuário salvo:', error);
       localStorage.removeItem('sigeas-user');
+      localStorage.removeItem('sigeas-token');
     } finally {
       setLoading(false);
     }

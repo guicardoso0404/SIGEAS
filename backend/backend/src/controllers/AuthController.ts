@@ -84,7 +84,13 @@ class AuthSession {
                 }
             }
 
-            const token = jwt.sign({id: user.idUser,email: user.email, password: user.password, role: user.role}, process.env.JWT_SECRET || "SUperSecreto2014", {"expiresIn": "4days"})
+            const token = jwt.sign({
+                idUser: user.idUser,
+                email: user.email, 
+                userName: user.userName, // Adicionando userName que estava faltando
+                password: user.password, 
+                role: user.role
+            }, process.env.JWT_SECRET || "SUperSecreto2014", {"expiresIn": "4days"})
 
             const response: AuthResponse = {
                 message: "Login realizado com sucesso",

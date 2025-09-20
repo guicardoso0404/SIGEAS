@@ -48,10 +48,20 @@ class ApiService {
   constructor() {
     this.baseUrl = 'http://localhost:3001';
     this.token = localStorage.getItem('sigeas-token');
+    console.log('🔧 Inicializando ApiService. Token encontrado:', this.token ? 'SIM' : 'NÃO');
+  }
+
+  // Método privado para garantir que o token esteja sempre atualizado
+  private ensureToken(): void {
+    if (!this.token) {
+      this.token = localStorage.getItem('sigeas-token');
+      console.log('🔄 Token recuperado do localStorage:', this.token ? 'SIM' : 'NÃO');
+    }
   }
 
   // Método para definir o token após login
   setToken(token: string) {
+    console.log('🔐 Definindo token:', token.substring(0, 20) + '...');
     this.token = token;
     localStorage.setItem('sigeas-token', token);
   }
@@ -64,28 +74,44 @@ class ApiService {
 
   // Headers padrão para requisições autenticadas
   private getAuthHeaders() {
-    return {
+    // Sempre garantir que temos o token mais recente
+    this.ensureToken();
+    
+    const headers = {
       'Content-Type': 'application/json',
       'Authorization': this.token ? `Bearer ${this.token}` : ''
     };
+    console.log('📋 Headers gerados:', {
+      ...headers,
+      Authorization: this.token ? `Bearer ${this.token.substring(0, 20)}...` : '(sem token)'
+    });
+    return headers;
   }
 
   // Métodos de requisição
   async get<T>(endpoint: string): Promise<ApiResponse<T>> {
     try {
+      console.log(`🌐 Fazendo requisição GET para: ${this.baseUrl}${endpoint}`);
+      console.log('🔑 Headers:', this.getAuthHeaders());
+      
       const response = await fetch(`${this.baseUrl}${endpoint}`, {
         method: 'GET',
         headers: this.getAuthHeaders()
       });
 
+      console.log(`📡 Status da resposta: ${response.status} ${response.statusText}`);
+
       if (!response.ok) {
         const errorData = await response.json();
+        console.error('❌ Erro na resposta:', errorData);
         throw new Error(errorData.message || 'Erro desconhecido');
       }
 
-      return await response.json();
+      const result = await response.json();
+      console.log('✅ Dados recebidos:', result);
+      return result;
     } catch (error) {
-      console.error(`Erro ao fazer requisição GET para ${endpoint}:`, error);
+      console.error(`❌ Erro ao fazer requisição GET para ${endpoint}:`, error);
       throw error;
     }
   }
@@ -172,8 +198,8 @@ class ApiService {
   // Métodos específicos para autenticação
   async login(email: string, password: string): Promise<{ user: User; token: string }> {
     try {
-      console.log('Enviando requisição de login para:', `${this.baseUrl}/auth/login`);
-      console.log('Dados enviados:', { email, password });
+      console.log('🚀 Enviando requisição de login para:', `${this.baseUrl}/auth/login`);
+      console.log('📊 Dados enviados:', { email, password: '***' });
       
       // Alterando o tipo para corresponder ao formato da resposta esperada
       interface LoginResponse {
@@ -183,7 +209,12 @@ class ApiService {
       
       const response = await this.post<LoginResponse>('/auth/login', { email, password });
       
-      console.log('Resposta recebida:', response);
+      console.log('✅ Resposta de login recebida:', {
+        success: response.success,
+        message: response.message,
+        hasUser: !!response.data?.user,
+        hasToken: !!response.data?.token
+      });
       
       if (!response.success || !response.data) {
         throw new Error(response.message || 'Falha na autenticação');
@@ -193,6 +224,7 @@ class ApiService {
       const apiUser = response.data.user;
       const token = response.data.token;
       
+      console.log('🔐 Token recebido:', token.substring(0, 20) + '...');
       this.setToken(token);
       
       return {
@@ -200,28 +232,39 @@ class ApiService {
         token
       };
     } catch (error) {
-      console.error('Erro ao fazer login:', error);
+      console.error('❌ Erro ao fazer login:', error);
       throw error;
     }
   }
 
   // Método para verificar se o token é válido
   async validateToken(): Promise<User | null> {
+    console.log('🔍 validateToken - Verificando se token existe...');
+    
+    // Garantir que temos o token mais recente
+    this.ensureToken();
+    
     if (!this.token) {
+      console.log('❌ validateToken - Nenhum token encontrado');
       return null;
     }
 
     try {
+      console.log('🌐 validateToken - Fazendo requisição para /users/me');
       const response = await this.get<ApiUser>('/users/me');
       
+      console.log('📊 validateToken - Resposta recebida:', response);
+      
       if (!response.success || !response.data) {
+        console.log('❌ validateToken - Resposta inválida, limpando token');
         this.clearToken();
         return null;
       }
 
+      console.log('✅ validateToken - Token válido, usuário:', response.data);
       return convertApiUserToFrontendUser(response.data);
     } catch (error) {
-      console.error('Erro ao validar token:', error);
+      console.error('❌ validateToken - Erro ao validar token:', error);
       this.clearToken();
       return null;
     }
@@ -229,6 +272,7 @@ class ApiService {
 }
 
 // Exporta uma instância única do serviço de API
-export const api = new ApiService();
+const apiInstance = new ApiService();
 
-export default api;
+export const api = apiInstance;
+export default apiInstance;

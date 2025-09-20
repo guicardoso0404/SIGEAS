@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Users, Save } from 'lucide-react';
+import { Users, Save, Plus } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { notasService } from '../../services/notasService';
 import { turmaService } from '../../services/turmaService';
+import api from '../../services/api';
 
 // Interfaces para gerenciar dados de notas e entidades
 interface NotasData {
@@ -37,12 +38,30 @@ export const NotasLauncher: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [creatingClass, setCreatingClass] = useState(false);
 
-  useEffect(() => {
-    const fetchTurmas = async () => {
-      try {
+  // Função para criar uma turma de teste
+  const handleCreateTestClass = async () => {
+    if (!user?.id) {
+      alert('Usuário não encontrado');
+      return;
+    }
+
+    setCreatingClass(true);
+    try {
+      console.log('🏫 Criando turma de teste...');
+      const response = await api.post('/create-test-class', {
+        className: `Turma do ${user.nome}`,
+        teacherId: parseInt(user.id),
+        subject: 'Matemática'
+      });
+
+      console.log('✅ Resposta da criação:', response);
+
+      if (response.success) {
+        alert('Turma criada com sucesso!');
+        // Recarregar as turmas
         const turmasData = await turmaService.getClassesByTeacher();
-        // Garantir que todos os campos necessários estejam presentes
         const turmasFormatadas: TurmaData[] = turmasData.map(turma => ({
           id: turma.id,
           nome: turma.nome,
@@ -50,14 +69,47 @@ export const NotasLauncher: React.FC = () => {
           professorId: turma.professorId || user?.id || ''
         }));
         setTurmas(turmasFormatadas);
+      }
+    } catch (error) {
+      console.error('❌ Erro ao criar turma:', error);
+      alert('Erro ao criar turma: ' + (error instanceof Error ? error.message : 'Erro desconhecido'));
+    } finally {
+      setCreatingClass(false);
+    }
+  };
+
+  useEffect(() => {
+    const fetchTurmas = async () => {
+      try {
+        console.log('🚀 Buscando turmas do professor. Usuário:', user);
+        const turmasData = await turmaService.getClassesByTeacher();
+        console.log('📊 Turmas recebidas do serviço:', turmasData);
+        
+        // Garantir que todos os campos necessários estejam presentes
+        const turmasFormatadas: TurmaData[] = turmasData.map(turma => ({
+          id: turma.id,
+          nome: turma.nome,
+          serie: turma.serie,
+          professorId: turma.professorId || user?.id || ''
+        }));
+        
+        console.log('✅ Turmas formatadas:', turmasFormatadas);
+        setTurmas(turmasFormatadas);
+        
+        if (turmasFormatadas.length === 0) {
+          console.log('⚠️ Nenhuma turma encontrada para este professor');
+        }
       } catch (err) {
-        console.error('Erro ao buscar turmas do professor:', err);
+        console.error('❌ Erro ao buscar turmas do professor:', err);
         setError('Não foi possível carregar suas turmas');
       }
     };
     
     if (user?.id) {
+      console.log('👤 Usuário autenticado encontrado:', user);
       fetchTurmas();
+    } else {
+      console.log('⚠️ Usuário não encontrado');
     }
   }, [user?.id]);
   
@@ -201,9 +253,28 @@ export const NotasLauncher: React.FC = () => {
 
       <div className="bg-white rounded-lg shadow-md p-6 mb-6">
         <div className="mb-6">
-          <label htmlFor="turma" className="block text-sm font-medium text-gray-700 mb-2">
-            Selecionar Turma
-          </label>
+          <div className="flex items-center justify-between mb-4">
+            <label htmlFor="turma" className="block text-sm font-medium text-gray-700">
+              Selecionar Turma
+            </label>
+            <button
+              onClick={handleCreateTestClass}
+              disabled={creatingClass}
+              className={`${creatingClass ? 'bg-blue-400 cursor-not-allowed' : 'bg-green-600 hover:bg-green-700'} text-white px-4 py-2 rounded-md flex items-center space-x-2 transition-colors text-sm`}
+            >
+              {creatingClass ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                  <span>Criando...</span>
+                </>
+              ) : (
+                <>
+                  <Plus className="w-4 h-4" />
+                  <span>Criar Turma Teste</span>
+                </>
+              )}
+            </button>
+          </div>
           <select
             id="turma"
             value={selectedTurma}

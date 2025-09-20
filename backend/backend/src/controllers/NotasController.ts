@@ -18,7 +18,7 @@ class NotasController {
         try {
             const [rows] = await db.query(`
                 SELECT g.*, 
-                       u.nameUser as studentName, 
+                       u.userName as studentName, 
                        c.className,
                        c.subject
                 FROM Grade g
@@ -66,14 +66,14 @@ class NotasController {
 
             const [rows] = await db.query(`
                 SELECT g.*, 
-                       u.nameUser as studentName,
+                       u.userName as studentName,
                        c.className,
                        c.subject
                 FROM Grade g
                 JOIN User u ON g.studentId = u.idUser
                 JOIN ClassRoom c ON g.classId = c.idClass
                 WHERE g.classId = ?
-                ORDER BY u.nameUser, g.assessmentDate DESC
+                ORDER BY u.userName, g.assessmentDate DESC
             `, [classId]);
             
             return res.status(200).json({
@@ -125,7 +125,7 @@ class NotasController {
                 SELECT g.*, 
                        c.className,
                        c.subject,
-                       u.nameUser as teacherName
+                       u.userName as teacherName
                 FROM Grade g
                 JOIN ClassRoom c ON g.classId = c.idClass
                 JOIN User u ON c.teacherId = u.idUser
